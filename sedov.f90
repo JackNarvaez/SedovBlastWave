@@ -5,26 +5,28 @@ module sedov
 
     contains
 
-    subroutine sedov_blast(t, e0, gamm, rho0, ndim)
-        real, intent(in) :: t, e0, gamm, rho0
+    subroutine sedov_blast(t, e0, gamm, rho0, ndim, rmax)
+        real, intent(in) :: t, e0, gamm, rho0, rmax
         integer, intent(in) :: ndim
 
-        real, parameter :: alpha = 0.851060
+        real, parameter :: alpha = 0.851060 ! only valid for gamma = 1.4
         integer, parameter :: npts = 1000
+        integer, parameter :: npts2 = 100
         real :: rshock, rhoshock
         real :: gamm1
         real :: gamm2
         real :: e
         real :: a_const
         real :: V, V2, V0, dV
+        real :: dr2
+        real :: r, rho
         integer :: ndim2
-        real, dimension(npts) :: r_ad
-        real, dimension(npts) :: rho_ad
 
         real :: pa, pb, pc, pd, pe
         real :: alpha0, alpha1, alpha2, alpha3, alpha4, alpha5
         integer :: ii
 
+        open(unit=1, file="results.dat")
 
         gamm1 = gamm + 1.
         gamm2 = gamm - 1.
@@ -32,11 +34,10 @@ module sedov
         e = alpha*e0
         a_const = (e/rho0)**(1./ndim2)
 
-
         !
         ! Define paramethers
         ! 
-        pa = ndim2*gamm1/4.0
+        pa = ndim2*gamm1/4.
         pb = gamm1 / gamm2
         pc = 0.5 * ndim2 * gamm
         pd = ndim2*gamm1 / (ndim2*gamm1 - 2.*(2.+ndim*gamm2))
@@ -62,14 +63,25 @@ module sedov
         V2 = 4.0/(ndim2*gamm1)
         V = V0
 
-        dV = (v2 - V0)/REAL(npts-1)  ! need to check the denominator
-        do ii=1,npts
-            r_ad(ii)  = funct_rdr2(V, pa, pb, pc, pd, pe, alpha0, alpha1, alpha2)*rshock
-            rho_ad(ii) = funct_rhodrho2(V, gamm, pb, pc, pd, pe, alpha3, alpha4, alpha5)*rhoshock
-            V = V0 + ii*dV
-            print *, r_ad(ii), rho_ad(ii)
-        enddo
+        dV = (v2 - V0)/REAL(npts-1)
 
+        do ii=1,npts
+            r  = funct_rdr2(V, pa, pb, pc, pd, pe, alpha0, alpha1, alpha2)*rshock
+            rho = funct_rhodrho2(V, gamm, pb, pc, pd, pe, alpha3, alpha4, alpha5)*rhoshock
+            V = V0 + ii*dV
+            write(1,*) r, rho
+        enddo
+        if (rmax > rshock) then
+            dr2 = (rmax-rshock)/REAL(npts2-1)
+            do ii=1, npts2
+                r = rshock + ii*dr2
+                rho = rho0
+                write(1,*) r, rho
+            enddo
+        end if
+
+        close(1)
+    
     end subroutine sedov_blast
 
     real function funct_r2(t, a_const, ndim2)
@@ -88,7 +100,6 @@ module sedov
         x2 = b*(c*V-1.)
         x3 = d*(1.-e*V)
 
-        !print *, x2, x3, x4, alpha3, alpha4, alpha5
         temp = x1**alpha0 * x2**alpha2 * x3**alpha1
         funct_rdr2 = 1.0/temp
 
@@ -108,7 +119,6 @@ module sedov
         x3 = d*(1.-e*V)
         x4 = b*(1.-c/gamm*V) 
 
-        !print *, x2, x3, x4, alpha3, alpha4, alpha5
         funct_rhodrho2 = x2**alpha3 * x3**alpha4 * x4**alpha5
 
     end function funct_rhodrho2
