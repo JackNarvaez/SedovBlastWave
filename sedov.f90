@@ -1,3 +1,10 @@
+!==============================================================================
+! Module Sedov
+! Calculate the analytical solution for the Sedov Blast wave in the standard
+! case. Current vertion is valid only for a gamma value equal to 1.4
+! Written by Narvaez J. 2023
+!==============================================================================
+
 module sedov
     implicit none
     public :: sedov_blast
@@ -71,6 +78,7 @@ module sedov
             V = V0 + ii*dV
             write(1,*) r, rho
         enddo
+        
         if (rmax > rshock) then
             dr2 = (rmax-rshock)/REAL(npts2-1)
             do ii=1, npts2
@@ -85,6 +93,7 @@ module sedov
     end subroutine sedov_blast
 
     real function funct_r2(t, a_const, ndim2)
+    ! Calculate radius of the shock front
         real, intent(in) :: t, a_const
         integer, intent(in) :: ndim2
 
@@ -106,6 +115,7 @@ module sedov
     end function funct_rdr2
 
     real function funct_rho2(rho1, gamm1, gamm2)
+    ! Calculate density at the shock front
         real, intent(in) :: rho1, gamm1, gamm2
 
         funct_rho2 = (gamm1/gamm2) * rho1
