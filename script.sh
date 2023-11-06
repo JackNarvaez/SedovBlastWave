@@ -11,4 +11,4 @@ gfortran ${fflags} -o ${out} ${files[@]}
 
 gnuplot -p plot.gp
 
-rm -f sedov *.mod  
+rm -f sedov *.mod  *.gp

@@ -14,6 +14,7 @@ program main
     real :: rho0
     real :: rmax
     real :: gamm = 1.4
+    integer :: prop
     integer, parameter :: ndim = 3
 
     print *, '--------------------------------------------------'
@@ -27,8 +28,34 @@ program main
     read  *, rho0
     print *, 'Enter maximum radius:'
     read  *, rmax
+    print 2
 
-    call sedov_blast(t, e0, gamm, rho0, ndim, rmax)
+    2 format( 'Analytical Solution:' ,/, &
+              '  1) Density' ,/, &
+              '  2) Pressure', /, &
+              'Property:')
+    read  *, prop
+
+    call sedov_blast(t, e0, gamm, rho0, ndim, rmax, prop)
+
+    ! Write Gnuplot file
+
+    open(unit=3, file='plot.gp')
+
+    write(3, *) 'set xlabel "r"'
+    
+    select case(prop)
+    case(1)
+        write(3, *) 'set ylabel "{/Symbol r}"'
+        write(3, *) 'plot [0:', rmax, '] [-0.1:*] "density.dat" using 1:2 with lines title "{/Symbol r}(r)"'
+        write(3, *) 'set terminal png'
+    case(2)
+        write(3, *) 'set ylabel "P"'
+        write(3, *) 'plot [0:', rmax, '] [0:*] "pressure.dat" using 1:2 with lines title "P(r)"'
+        write(3, *) 'set terminal png'
+    end select
+
+    close(3)
 
     print *, '--------------------------------------------------'
     print *, '-----                  End                   -----' 
